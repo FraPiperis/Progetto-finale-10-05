@@ -2,12 +2,14 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const authorsRoutes = require("./routes/authors");
+const blogPostRoutes = require("./routes/blogPosts");
 
 const app = express();
 const PORT = 3000;
 
 app.use(bodyParser.json());
 app.use("/authors", authorsRoutes);
+app.use("/blogPosts", blogPostRoutes);
 
 // Connessione a MongoDB
 mongoose.connect("mongodb://localhost:27017/strive_blog", {
@@ -16,3 +18,7 @@ mongoose.connect("mongodb://localhost:27017/strive_blog", {
 })
 .then(() => app.listen(PORT, () => console.log(`Server attivo su http://localhost:${PORT}`)))
 .catch(err => console.error("Errore di connessione a MongoDB:", err));
+
+
+
+

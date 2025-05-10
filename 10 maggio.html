@@ -6,6 +6,95 @@
     <title>Document</title>
 </head>
 <body>
-    
+    <form id="article-form">
+        <input type="text" name="title" placeholder="Titolo" required />
+        <input type="text" name="category" placeholder="Categoria" required />
+        <input type="text" name="cover" placeholder="Immagine (URL)" required />
+        <input type="number" name="readTimeValue" placeholder="Tempo lettura (numero)" required />
+        <input type="text" name="readTimeUnit" placeholder="Unità (es. minuti)" required />
+        <input type="email" name="author" placeholder="Email autore" required />
+        <textarea name="content" placeholder="Contenuto HTML" required></textarea>
+        <button type="submit">Pubblica articolo</button>
+      </form>
+
+      <div id="blog-posts-container"></div>
+
+      <input type="text" id="searchInput" placeholder="Cerca per titolo..." />
+        <button onclick="searchPosts()">Cerca</button>
+
+        
+      <script>
+        document.getElementById('article-form').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const newPost = {
+            title: form.title.value,
+            category: form.category.value,
+            cover: form.cover.value,
+            readTime: {
+              value: parseInt(form.readTimeValue.value),
+              unit: form.readTimeUnit.value
+            },
+            author: form.author.value,
+            content: form.content.value
+          };
+      
+          const res = await fetch('/blogPosts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newPost)
+          });
+      
+          if (res.ok) {
+            alert('Articolo pubblicato!');
+            form.reset();
+          } else {
+            alert('Errore nella pubblicazione.');
+          }
+        });
+        async function loadBlogPosts() {
+    const res = await fetch('/blogPosts');
+    const data = await res.json();
+    const posts = data.data;
+
+    const container = document.getElementById('blog-posts-container');
+    container.innerHTML = '';
+
+    posts.forEach(post => {
+      const el = document.createElement('div');
+      el.innerHTML = `
+        <h3>${post.title}</h3>
+        <img src="${post.cover}" width="200"/>
+        <p>${post.category} - ${post.readTime.value} ${post.readTime.unit}</p>
+        <p>${post.content}</p>
+        <hr/>
+      `;
+      container.appendChild(el);
+    });
+    }
+
+    loadBlogPosts();
+    async function searchPosts() {
+    const title = document.getElementById("searchInput").value;
+    const res = await fetch(`/blogPosts?title=${encodeURIComponent(title)}`);
+    const data = await res.json();
+    const posts = data.data;
+
+    const container = document.getElementById("blog-posts-container");
+    container.innerHTML = "";
+
+    posts.forEach(post => {
+      const el = document.createElement('div');
+      el.innerHTML = `
+        <h3>${post.title}</h3>
+        <img src="${post.cover}" width="200"/>
+        <p>${post.category} - ${post.readTime.value} ${post.readTime.unit}</p>
+        <p>${post.content}</p>
+        <hr/>
+      `;
+      container.appendChild(el);
+    });
+  }
+      </script>
 </body>
 </html>
