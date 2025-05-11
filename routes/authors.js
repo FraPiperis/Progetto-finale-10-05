@@ -1,34 +1,34 @@
 const express = require("express");
 const router = express.Router();
 const Author = require("../models/Author");
+const { upload } = require("../cloudinary");
 
-// GET /authors - Lista di tutti gli autori
+// GET /authors - con paginazione
 router.get("/", async (req, res) => {
-  const authors = await Author.find();
-  res.json(authors);
+  const { page = 1, limit = 10 } = req.query;
+  const skip = (page - 1) * limit;
+
+  const authors = await Author.find()
+    .skip(Number(skip))
+    .limit(Number(limit));
+
+  const total = await Author.countDocuments();
+
+  res.json({
+    total,
+    page: Number(page),
+    limit: Number(limit),
+    totalPages: Math.ceil(total / limit),
+    data: authors,
+  });
 });
 
 // GET /authors/:id - Autore singolo
-// GET /authors - con paginazione
-router.get("/", async (req, res) => {
-    const { page = 1, limit = 10 } = req.query;
-    const skip = (page - 1) * limit;
-  
-    const authors = await Author.find()
-      .skip(Number(skip))
-      .limit(Number(limit));
-  
-    const total = await Author.countDocuments();
-  
-    res.json({
-      total,
-      page: Number(page),
-      limit: Number(limit),
-      totalPages: Math.ceil(total / limit),
-      data: authors
-    });
-  });
-  
+router.get("/:id", async (req, res) => {
+  const author = await Author.findById(req.params.id);
+  if (!author) return res.status(404).send("Autore non trovato");
+  res.json(author);
+});
 
 // POST /authors - Crea un nuovo autore
 router.post("/", async (req, res) => {
@@ -63,4 +63,21 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+// PATCH /authors/:authorId/avatar - Carica immagine su Cloudinary
+router.patch("/:authorId/avatar", upload.single("avatar"), async (req, res) => {
+  const { authorId } = req.params;
+  if (!req.file || !req.file.path) {
+    return res.status(400).send("Immagine mancante");
+  }
+
+  const updated = await Author.findByIdAndUpdate(
+    authorId,
+    { avatar: req.file.path },
+    { new: true }
+  );
+
+  res.status(200).send(updated);
+});
+
 module.exports = router;
+
